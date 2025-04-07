@@ -271,7 +271,7 @@ export class MetadataService extends BaseService {
     ];
 
     if (this.isMotionPhoto(asset, exifTags)) {
-      promises.push(this.applyMotionPhotos(asset as unknown as Asset, exifTags, dates, stats));
+      promises.push(this.applyMotionPhotos(asset, exifTags, dates, stats));
     }
 
     if (isFaceImportEnabled(metadata) && this.hasTaggedFaces(exifTags)) {
@@ -643,7 +643,7 @@ export class MetadataService extends BaseService {
       await this.jobRepository.queueAll(jobs);
     }
 
-    const facesToRemove = asset.faces.filter((face) => face.sourceType === SourceType.EXIF).map((face) => face.id);
+    const facesToRemove = asset.faces!.filter((face) => face.sourceType === SourceType.EXIF).map((face) => face.id);
     if (facesToRemove.length > 0) {
       this.logger.debug(`Removing ${facesToRemove.length} faces for asset ${asset.id}: ${asset.originalPath}`);
     }

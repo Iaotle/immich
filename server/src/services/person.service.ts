@@ -2,7 +2,8 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Insertable, Updateable } from 'kysely';
 import { FACE_THUMBNAIL_SIZE, JOBS_ASSET_PAGINATION_SIZE } from 'src/constants';
 import { StorageCore } from 'src/cores/storage.core';
-import { AssetFaces, FaceSearch, Person } from 'src/db';
+import { AssetFace, Person } from 'src/database';
+import { AssetFaces, FaceSearch } from 'src/db';
 import { Chunked, OnJob } from 'src/decorators';
 import { BulkIdErrorReason, BulkIdResponseDto } from 'src/dtos/asset-ids.response.dto';
 import { AuthDto } from 'src/dtos/auth.dto';
@@ -315,6 +316,11 @@ export class PersonService extends BaseService {
     const facesToAdd: (Insertable<AssetFaces> & { id: string })[] = [];
     const embeddings: FaceSearch[] = [];
     const mlFaceIds = new Set<string>();
+
+    if (!asset.faces) {
+      return JobStatus.FAILED;
+    }
+
     for (const face of asset.faces) {
       if (face.sourceType === SourceType.MACHINE_LEARNING) {
         mlFaceIds.add(face.id);
@@ -330,7 +336,7 @@ export class PersonService extends BaseService {
         x2: boundingBox.x2 * widthScale,
         y2: boundingBox.y2 * heightScale,
       };
-      const match = asset.faces.find((face) => this.iou(face, scaledBox) > 0.5);
+      const match = asset.faces.find((face: AssetFace) => this.iou(face, scaledBox) > 0.5);
 
       if (match && !mlFaceIds.delete(match.id)) {
         embeddings.push({ faceId: match.id, embedding });
@@ -477,7 +483,7 @@ export class PersonService extends BaseService {
       embedding: face.faceSearch.embedding,
       maxDistance: machineLearning.facialRecognition.maxDistance,
       numResults: machineLearning.facialRecognition.minFaces,
-      minBirthDate: face.asset.fileCreatedAt,
+      minBirthDate: face.asset.fileCreatedAt ?? undefined,
     });
 
     // `matches` also includes the face itself
@@ -503,7 +509,7 @@ export class PersonService extends BaseService {
         maxDistance: machineLearning.facialRecognition.maxDistance,
         numResults: 1,
         hasPerson: true,
-        minBirthDate: face.asset.fileCreatedAt,
+        minBirthDate: face.asset.fileCreatedAt ?? undefined,
       });
 
       if (matchWithPerson.length > 0) {
