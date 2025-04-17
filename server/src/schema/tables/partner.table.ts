@@ -1,15 +1,7 @@
 import { UpdatedAtTrigger, UpdateIdColumn } from 'src/decorators';
 import { partners_delete_audit } from 'src/schema/functions';
 import { UserTable } from 'src/schema/tables/user.table';
-import {
-  AfterDeleteTrigger,
-  Column,
-  ColumnIndex,
-  CreateDateColumn,
-  ForeignKeyColumn,
-  Table,
-  UpdateDateColumn,
-} from 'src/sql-tools';
+import { AfterDeleteTrigger, Column, CreateDateColumn, ForeignKeyColumn, Table, UpdateDateColumn } from 'src/sql-tools';
 
 @Table('partners')
 @UpdatedAtTrigger('partners_updated_at')
@@ -36,7 +28,6 @@ export class PartnerTable {
   @Column({ type: 'boolean', default: false })
   inTimeline!: boolean;
 
-  @ColumnIndex('IDX_partners_update_id')
-  @UpdateIdColumn()
+  @UpdateIdColumn({ indexName: 'IDX_partners_update_id' })
   updateId!: string;
 }
